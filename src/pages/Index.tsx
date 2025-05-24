@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, Users, MapPin, Bell, MessageSquare, Smartphone } from "lucide-react";
+import { TrendingUp, Users, MapPin, Bell, MessageSquare, Smartphone, Tractor, ShoppingCart } from "lucide-react";
 import Header from "@/components/Header";
 import FarmerDashboard from "@/components/FarmerDashboard";
 import BuyerMarketplace from "@/components/BuyerMarketplace";
@@ -50,17 +50,19 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button 
               size="lg" 
-              className="bg-green-600/90 hover:bg-green-700 text-white px-6 lg:px-8 py-4 lg:py-6 text-base lg:text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 backdrop-blur-sm"
+              className="bg-green-600/90 hover:bg-green-700 text-white px-6 lg:px-8 py-4 lg:py-6 text-base lg:text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 backdrop-blur-sm flex items-center gap-2 lg:gap-3"
               onClick={() => setActiveTab("dashboard")}
             >
+              <Tractor className="w-4 h-4 lg:w-5 lg:h-5" />
               Start as Farmer
             </Button>
             <Button 
               size="lg" 
               variant="outline" 
-              className="border-white/80 text-white hover:bg-white/10 bg-white/5 backdrop-blur-sm px-6 lg:px-8 py-4 lg:py-6 text-base lg:text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              className="border-white/80 text-white hover:bg-white/10 bg-white/5 backdrop-blur-sm px-6 lg:px-8 py-4 lg:py-6 text-base lg:text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2 lg:gap-3"
               onClick={() => setActiveTab("marketplace")}
             >
+              <ShoppingCart className="w-4 h-4 lg:w-5 lg:h-5" />
               Browse as Buyer
             </Button>
           </div>
