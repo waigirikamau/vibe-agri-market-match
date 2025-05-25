@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, Users, MapPin, Bell, MessageSquare, Smartphone, Tractor, ShoppingCart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import FarmerDashboard from "@/components/FarmerDashboard";
 import BuyerMarketplace from "@/components/BuyerMarketplace";
@@ -14,6 +15,15 @@ import ProduceRepository from "@/components/ProduceRepository";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const navigate = useNavigate();
+
+  const handleFarmerClick = () => {
+    navigate("/farmer-auth");
+  };
+
+  const handleBuyerClick = () => {
+    navigate("/buyer-auth");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-orange-50">
@@ -51,7 +61,7 @@ const Index = () => {
             <Button 
               size="lg" 
               className="bg-green-600/90 hover:bg-green-700 text-white px-6 lg:px-8 py-4 lg:py-6 text-base lg:text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 backdrop-blur-sm flex items-center gap-2 lg:gap-3"
-              onClick={() => setActiveTab("dashboard")}
+              onClick={handleFarmerClick}
             >
               <Tractor className="w-4 h-4 lg:w-5 lg:h-5" />
               Start as Farmer
@@ -60,7 +70,7 @@ const Index = () => {
               size="lg" 
               variant="outline" 
               className="border-white/80 text-white hover:bg-white/10 bg-white/5 backdrop-blur-sm px-6 lg:px-8 py-4 lg:py-6 text-base lg:text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2 lg:gap-3"
-              onClick={() => setActiveTab("marketplace")}
+              onClick={handleBuyerClick}
             >
               <ShoppingCart className="w-4 h-4 lg:w-5 lg:h-5" />
               Browse as Buyer
