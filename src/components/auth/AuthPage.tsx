@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Tractor, ShoppingCart, Phone, Lock } from "lucide-react";
+import { Tractor, ShoppingCart, Mail, Lock } from "lucide-react";
 
 interface AuthPageProps {
   userType: 'farmer' | 'buyer';
@@ -16,7 +16,7 @@ interface AuthPageProps {
 
 const AuthPage = ({ userType }: AuthPageProps) => {
   const [isLogin, setIsLogin] = useState(true);
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -27,9 +27,8 @@ const AuthPage = ({ userType }: AuthPageProps) => {
 
     try {
       if (isLogin) {
-        // For login, we'll use phone number as username and password
         const { data, error } = await supabase.auth.signInWithPassword({
-          email: `${phoneNumber}@shambaconnect.local`, // Convert phone to email format
+          email: email,
           password: password,
         });
 
@@ -38,13 +37,11 @@ const AuthPage = ({ userType }: AuthPageProps) => {
         toast.success("Login successful!");
         navigate("/dashboard");
       } else {
-        // For signup, create account with phone number
         const { data, error } = await supabase.auth.signUp({
-          email: `${phoneNumber}@shambaconnect.local`, // Convert phone to email format
+          email: email,
           password: password,
           options: {
             data: {
-              phone_number: phoneNumber,
               user_type: userType
             }
           }
@@ -56,6 +53,7 @@ const AuthPage = ({ userType }: AuthPageProps) => {
         navigate(`/profile-setup?type=${userType}`);
       }
     } catch (error: any) {
+      console.error("Auth error:", error);
       toast.error(error.message || "Authentication failed");
     } finally {
       setIsLoading(false);
@@ -100,15 +98,15 @@ const AuthPage = ({ userType }: AuthPageProps) => {
             <TabsContent value="login" className="space-y-4 mt-6">
               <form onSubmit={handleAuth} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="email">Email Address</Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+254 700 000 000"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      id="email"
+                      type="email"
+                      placeholder="your.email@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
                       required
                     />
@@ -144,15 +142,15 @@ const AuthPage = ({ userType }: AuthPageProps) => {
             <TabsContent value="signup" className="space-y-4 mt-6">
               <form onSubmit={handleAuth} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-phone">Phone Number</Label>
+                  <Label htmlFor="signup-email">Email Address</Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
-                      id="signup-phone"
-                      type="tel"
-                      placeholder="+254 700 000 000"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      id="signup-email"
+                      type="email"
+                      placeholder="your.email@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
                       required
                     />
