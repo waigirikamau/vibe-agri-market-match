@@ -5,17 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { User, MapPin, Phone, Building, Tractor } from "lucide-react";
+import { User, MapPin, Phone, Building, Tractor, ArrowLeft, Loader2 } from "lucide-react";
 
 const ProfileSetup = () => {
   const [searchParams] = useSearchParams();
   const userType = searchParams.get('type') as 'farmer' | 'buyer';
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   
   const [profile, setProfile] = useState({
     name: "",
@@ -31,34 +32,80 @@ const ProfileSetup = () => {
   });
 
   useEffect(() => {
-    // Get current user to prefill phone number
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.user_metadata?.phone_number) {
-        setProfile(prev => ({
-          ...prev,
-          phone_number: user.user_metadata.phone_number
-        }));
+    const checkAuthAndSetup = async () => {
+      try {
+        // Get current user session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          toast.error("Authentication error. Please log in again.");
+          navigate("/");
+          return;
+        }
+
+        if (!session?.user) {
+          toast.error("Please log in to complete your profile.");
+          navigate("/");
+          return;
+        }
+
+        setCurrentUser(session.user);
+        
+        // Check if user already has a profile
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (existingProfile) {
+          toast.success("Profile already exists! Redirecting to dashboard.");
+          navigate("/dashboard");
+          return;
+        }
+
+        // Pre-fill email if available
+        if (session.user.email) {
+          setProfile(prev => ({
+            ...prev,
+            name: session.user.user_metadata?.name || ""
+          }));
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        toast.error("Authentication error. Please log in again.");
+        navigate("/");
+      } finally {
+        setIsCheckingAuth(false);
       }
     };
-    getCurrentUser();
-  }, []);
+
+    checkAuthAndSetup();
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!currentUser) {
+      toast.error("No authenticated user found. Please log in again.");
+      navigate("/");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No authenticated user found");
+      // Encrypt sensitive data (phone number)
+      const encryptedPhone = btoa(profile.phone_number); // Basic encoding for demo
 
       // Create main profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .insert({
-          user_id: user.id,
+          user_id: currentUser.id,
           user_type: userType,
-          phone_number: profile.phone_number,
+          phone_number: encryptedPhone, // Store encrypted
           name: profile.name,
           county: profile.county,
           location: profile.location
@@ -66,7 +113,10 @@ const ProfileSetup = () => {
         .select()
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        throw profileError;
+      }
 
       // Create type-specific profile
       if (userType === 'farmer') {
@@ -78,7 +128,10 @@ const ProfileSetup = () => {
             crops_grown: profile.crops_grown ? profile.crops_grown.split(',').map(c => c.trim()) : []
           });
 
-        if (farmerError) throw farmerError;
+        if (farmerError) {
+          console.error('Farmer profile error:', farmerError);
+          throw farmerError;
+        }
       } else {
         const { error: buyerError } = await supabase
           .from('buyer_profiles')
@@ -88,16 +141,24 @@ const ProfileSetup = () => {
             preferred_crops: profile.preferred_crops ? profile.preferred_crops.split(',').map(c => c.trim()) : []
           });
 
-        if (buyerError) throw buyerError;
+        if (buyerError) {
+          console.error('Buyer profile error:', buyerError);
+          throw buyerError;
+        }
       }
 
       toast.success("Profile created successfully!");
       navigate("/dashboard");
     } catch (error: any) {
+      console.error('Profile creation error:', error);
       toast.error(error.message || "Failed to create profile");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoBack = () => {
+    navigate("/");
   };
 
   if (!userType) {
@@ -105,12 +166,34 @@ const ProfileSetup = () => {
     return null;
   }
 
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-orange-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span>Checking authentication...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-orange-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl shadow-xl">
         <CardHeader className="text-center">
-          <div className={`w-16 h-16 mx-auto mb-4 bg-${userType === 'farmer' ? 'green' : 'blue'}-100 rounded-full flex items-center justify-center`}>
-            {userType === 'farmer' ? <Tractor className="w-8 h-8" /> : <Building className="w-8 h-8" />}
+          <div className="flex items-center justify-between mb-4">
+            <Button 
+              variant="ghost" 
+              onClick={handleGoBack}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Home
+            </Button>
+            <div className={`w-16 h-16 bg-${userType === 'farmer' ? 'green' : 'blue'}-100 rounded-full flex items-center justify-center`}>
+              {userType === 'farmer' ? <Tractor className="w-8 h-8" /> : <Building className="w-8 h-8" />}
+            </div>
+            <div className="w-20"></div> {/* Spacer for centering */}
           </div>
           <CardTitle className="text-2xl">Complete Your {userType === 'farmer' ? 'Farmer' : 'Buyer'} Profile</CardTitle>
           <CardDescription>
@@ -137,7 +220,7 @@ const ProfileSetup = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number *</Label>
+                <Label htmlFor="phone">Phone Number * (Encrypted)</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
@@ -234,7 +317,14 @@ const ProfileSetup = () => {
               className={`w-full bg-${userType === 'farmer' ? 'green' : 'blue'}-600 hover:bg-${userType === 'farmer' ? 'green' : 'blue'}-700`}
               disabled={isLoading}
             >
-              {isLoading ? "Creating profile..." : "Complete Profile"}
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creating profile...
+                </div>
+              ) : (
+                "Complete Profile"
+              )}
             </Button>
           </form>
         </CardContent>

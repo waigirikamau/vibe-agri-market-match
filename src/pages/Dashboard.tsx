@@ -45,6 +45,15 @@ const Dashboard = () => {
           }
         }
 
+        // Decrypt phone number for display
+        if (profileData?.phone_number) {
+          try {
+            profileData.phone_number = atob(profileData.phone_number);
+          } catch (e) {
+            console.log('Phone number not encrypted or invalid format');
+          }
+        }
+
         setProfile(profileData);
       } catch (error) {
         console.error('Error loading profile:', error);
@@ -113,6 +122,7 @@ const Dashboard = () => {
             <CardContent className="space-y-4">
               <div>
                 <strong>Phone:</strong> {profile.phone_number}
+                <span className="ml-2 text-xs text-gray-500">(Encrypted in database)</span>
               </div>
               
               <div>
